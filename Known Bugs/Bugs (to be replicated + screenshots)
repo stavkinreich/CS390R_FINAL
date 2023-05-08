@@ -1,0 +1,23 @@
+Opening / reopening a PDF file on Android devices causes the heap to grow, which is never decreased across multiple opens / closes. Allowing the heap to grow to arbitrarily large sizes gives precedent for heap-based exploits we’ve mentioned in class.
+https://stackoverflow.com/questions/28301998/mupdf-memory-leak-on-android
+
+When using the “FZ_STEXT_PRESERVE_IMAGES” flag, the software will require far more memory per page scanned than expected; while using this flag to preserve images is expected to use greater amounts of memory, this results in “gigabytes of memory per 100 pages” scanned, which larger than intended. This isn’t particularly dangerous but causes serious performance issues nonetheless. For reference, an entire screenshot of a 1920x1080 monitor takes some amount of memory which can be measured in kbs. From a more malicious angle, pdfs can be crafted in a way that plays to this weakness via filling the pdf with characters that will be read as images, causing the memory leak to be worse when scanning these crafted pdfs.
+https://bugs.ghostscript.com/show_bug.cgi?id=705621
+
+There is a use-after-free vulnerability that can crash the program if one tries to use it on a malicious pdf. This is found within the pdf_load_xref function (pdf/pdf-xref.c). This bug will not allow arbitrary code execution on a remote PC, but will still allow a bad actor to crash one’s program should they try to read said person’s emailed pdf. 
+https://security-tracker.debian.org/tracker/CVE-2016-6265
+
+There is a “Launch Action” which allows pdfs to execute Mono files; these can be from a local path, URL, or files embedded within the pdf itself. MuPDF uses the xdg-open command to do this, and MuPDF itself has no security checks when opening files. Thus, a crafted pdf can contain links to malicious sites or embedded files which can execute malicious code.
+https://bugs.ghostscript.com/show_bug.cgi?id=702064
+
+There is a heap-based buffer overflow vulnerability in the do_pdf_save_document function. It is possibility to potentially leverage this buffer overflow in order to deny service with a crafted payload pdf file
+https://www.cvedetails.com/cve/CVE-2018-6187/
+
+In MuPDF library 1.17.0-rc1 and earlier a use after free vulnerability exists. The vulnerability allows an attacker to possibly access previously freed memory, however minimal manipulation is achievable and this vulnerability has been patched in more recent versions.
+https://www.cvedetails.com/cve/CVE-2020-16600/
+
+There is a documented heap-based buffer overflow vulnerability in the pdf_load_mesh_params function. This vulnerability can allow for executing certain sections of the code and the attacker could also cause the program to crash using a large decode array. There is also no authentication required to exploit the vulnerability.
+https://www.cvedetails.com/cve/CVE-2016-6525/
+
+Through fuzzing a vulnerability in MuPDF was found and reported. Potentially a svg file with an embedded PNG file has the capability of triggering a heap buffer overflow in the fz_unpack_line function. This allows for the possibility for a pdf file with an embedded image to also be able to trigger a heap buffer overflow due to the PDF parser.
+https://bugs.ghostscript.com/show_bug.cgi?id=705883
