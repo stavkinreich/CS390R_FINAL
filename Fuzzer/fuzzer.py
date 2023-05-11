@@ -1,84 +1,87 @@
-import math
-import random
-import string
-import subprocess
-import time
-import os
 import datetime
-import codecs
+import math
+import os
+import random
+import subprocess
+import sys
+import shutil
 
-apps = [
-    "C:/Users/vboxuser/AppData/Local/SumatraPDF/SumatraPDF.exe"
-]
+FuzzFactor = 30
+sumatraPDF_exe = "C:/Users/vboxuser/AppData/Local/SumatraPDF/SumatraPDF.exe" 
+pdf_input_dir = "C:/Users/vboxuser/Desktop/fuzzer/Fuzzer/pdfs"
+pdf_output_dir = "C:/Users/vboxuser/Desktop/fuzzer/Fuzzer/pdfs-corrupt/"
+corrupt_output_file = "C:/Users/vboxuser/Desktop/fuzzer/Fuzzer/output-corrupt.txt"
+reg_output_file = "C:/Users/vboxuser/Desktop/fuzzer/Fuzzer/output-reg.txt"
+pdf_crashed_dir = "C:/Users/vboxuser/Desktop/fuzzer/Fuzzer/crashed-pdfs/"
 
-fuzz_input_dir = "C:/Users/vboxuser/Desktop/CS390/pdfs"
+def clean_corrupt_folder():
+    for root, subFolders, files in os.walk(pdf_output_dir):
+        for f in files:
+            os.unlink(os.path.join(root, f))
+def clean_corrupt_txt():
+    open(corrupt_output_file, 'w').close()
+def clean_reg_txt():
+     open(reg_output_file, 'w').close()
+def run_corrupt(fuzz_type, fuzz_count):
+    for i in range(fuzz_count):
+        clean_corrupt_folder()
+        clean_corrupt_txt()
+        time_start =  str(datetime.datetime.now())
+        for root, subFolders, files in os.walk(pdf_input_dir):
+            for file in files:
+                buf = bytearray(open(os.path.join(root,file), 'rb').read())
+                numwrites = random.randrange(math.ceil((float(len(buf)) / FuzzFactor))) + 1
 
-fuzz_output = "C:/Users/vboxuser/Desktop/CS390/fuzz.pdf"
+                for j in range(numwrites):
+                    rbyte = random.randrange(256)
+                    rn = random.randrange(len(buf))
+                    buf[rn] = rbyte
 
-fuzz_output_folder = "C:/Users/vboxuser/Desktop/CS390/out/"
+                open(pdf_output_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf", 'wb+').write(buf)
+            if fuzz_type == 'fuzzer':
+                process = subprocess.Popen([sumatraPDF_exe, pdf_output_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf"], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                crashed = process.poll()
+                if crashed:
+                    open(pdf_crashed_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf", 'wb+').write(buf)
+                else:
+                    process.terminate()
+        if fuzz_type == 'bench':
+            result = subprocess.Popen([sumatraPDF_exe, '-bench', pdf_output_dir[:-1]], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            if result.poll():
+                open(corrupt_output_file, 'w').write(result.stdout)
+                break
+            else:
+                result.terminate()
+    return
 
-fuzz_log = codecs.open("C:/Users/vboxuser/Desktop/CS390/log_" + time.strftime("%Y%m%d%H%M%S.txt"), "w", "utf-8")
-
-
-#So the fuzz factor controls the number of bytes to be changed
-#The lower the factor, the more bytes that will be modified.
-FuzzFactor = 250
-
-num_tests = 20000
-
-numberOfCrashes=0
-
-file_list = []
-
-for root, subFolders, files in os.walk(fuzz_input_dir):
-    for file in files:
-        file_list.append(os.path.join(root,file))
-
-fuzz_log.write("Starts at " + str(datetime.datetime.now()) + '\n')
-
-
-
-for i in range(num_tests):
-    
-    file_choice = random.choice(file_list)
-    
-    #app = random.choice(apps)
-
-    app = apps[0]
-
-    buf = bytearray(open(file_choice, 'rb').read())
-
-    numwrites = random.randrange(math.ceil((float(len(buf)) / FuzzFactor))) + 1
-
-    for j in range(numwrites):
-        rbyte = random.randrange(256)
-        rn = random.randrange(len(buf))
-        buf[rn] = rbyte
-
-    open(fuzz_output, 'wb').write(buf)
-
-    process = subprocess.Popen([app, fuzz_output])
-    time.sleep(1)
-
-    fuzz_log.write("File " + file_choice + ": ")
-
-    crashed = process.poll()
-    if crashed:
-
-        numberOfCrashes += 1
-
-        appName = app.split("/")[len(app.split("/"))-1]
-        print(str(numberOfCrashes) + " crashed application: " + appName)
-        fuzz_log.write(str(numberOfCrashes) + " crashed application: " + appName + "\n")
-
-        # save this crash input for later forensics
-        open(fuzz_output_folder + "crash_input" + str(numberOfCrashes) + ".pdf", "wb").write(buf)
+def run_reg(fuzz_type, fuzz_count):
+    for i in range(fuzz_count):
+        clean_reg_txt()
+        if fuzz_type == "fuzzer":
+            for root, subFolders, files in os.walk(pdf_input_dir):
+                for file in files:
+                    result = subprocess.Popen([sumatraPDF_exe, os.path.join(root,file)], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    if result.poll():
+                        open(reg_output_file, 'w').write(result.stdout)
+                    else:
+                        result.terminate()
+        if fuzz_type == 'bench':
+            result = subprocess.Popen([sumatraPDF_exe, '-bench', pdf_input_dir], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+            if result.poll():
+                open(reg_output_file, 'w').write(result.stdout)
+                break
+            else:
+                result.terminate()
+    return
+if __name__ == '__main__':
+    fuzzer_type = sys.argv[1]
+    fuzzer_pdf = sys.argv[2]
+    fuzzer_count = int(sys.argv[3])
+    if fuzzer_count < 0 or fuzzer_type not in ['bench', 'fuzzer']:
+        print('invalid input')
+    elif fuzzer_pdf == 'corrupt':
+        run_corrupt(fuzzer_type, fuzzer_count)
+    elif fuzzer_pdf == 'reg':
+        run_reg(fuzzer_type, fuzzer_count)
     else:
-        process.terminate()
-        fuzz_log.write("\n")
-    time.sleep(1)
-
-print ("The number of crashes is %s of %s"%(numberOfCrashes, num_tests))
-fuzz_log.write("The number of crashes is %s of %s"%(numberOfCrashes, num_tests) + "\n")
-fuzz_log.write("Ends at " + str(datetime.datetime.now()))
-fuzz_log.close()
+        print("invalid input")

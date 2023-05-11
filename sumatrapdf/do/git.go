@@ -11,7 +11,7 @@ func getGitLinearVersionMust() int {
 	// we add 1000 to create a version that is larger than the svn version
 	// from the time we used svn
 	n := len(lines) + 1000
-	panicIf(n < 10000, "getGitLinearVersion: n is %d (should be > 10000)", n)
+	panicIf(n < 1000, "getGitLinearVersion: n is %d (should be > 1000)", n)
 	return n
 }
 

@@ -1,0 +1,80 @@
+%PDF-1.4
+
+1 0 obj
+<<
+	/Type /Catalog
+	/Pages 2 0 R
+>>
+endobj
+
+
+2 0 obj
+<<
+	/Type /Pages
+	/Count 1
+	/Kids [G 0 R]
+>>
+endobj
+
+
+3 0 objš
+<<
+	/Type /Page
+	/Parent 2 0 R
+	/MediaBox [0 0 450 600]
+	/Contents [4 0 R]
+	/Resources
+	<B
+		/XObject << /Form0 5 0 R >>
+	>
+
+>>
+endobj
+
+4 0 objÁ
+<<
+	/Length 0
+>>
+stream
+q
+	0.1 0 0 0.1 175 250 cm
+	/Form0 Do
+Q
+endstream
+endobjÂ
+5 H Ôbj
+<<
+	/Type	/XObject
+	/Subtype/For,
+	/FormType 1
+	/BBox [0 0 1000 1000]
+	/M|trix [1 0 0 1 0 0]
+	/Resources
+	<<
+		/ProcSet [/PDF]  
+	>>
+	/¾ength  0ñ
+>>
+stream
+0  0  m 
+0  1000  l 
+Ð000  1000  l 
+1000  0  l 
+f 
+endstream
+endobj
+
+xŒef
+
+trailer
+<<
+	/Size 0
+	/Root 1 I R
+>>
+
+
+startxref
+
+0
+
+%×EOF
