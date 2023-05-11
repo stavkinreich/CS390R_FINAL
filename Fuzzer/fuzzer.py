@@ -38,13 +38,13 @@ def run_corrupt(fuzz_type, fuzz_count):
                     buf[rn] = rbyte
 
                 open(pdf_output_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf", 'wb+').write(buf)
-            if fuzz_type == 'fuzzer':
-                process = subprocess.Popen([sumatraPDF_exe, pdf_output_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf"], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
-                crashed = process.poll()
-                if crashed:
-                    open(pdf_crashed_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf", 'wb+').write(buf)
-                else:
-                    process.terminate()
+                if fuzz_type == 'fuzzer':
+                    process = subprocess.Popen([sumatraPDF_exe, pdf_output_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf"], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+                    crashed = process.poll()
+                    if crashed:
+                        open(pdf_crashed_dir + file[:-4] + "-corrupt" + str(rbyte) + ".pdf", 'wb+').write(buf)
+                    else:
+                        process.terminate()
         if fuzz_type == 'bench':
             result = subprocess.Popen([sumatraPDF_exe, '-bench', pdf_output_dir[:-1]], errors='ignore', stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
             if result.poll():
